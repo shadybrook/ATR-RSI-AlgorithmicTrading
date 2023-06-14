@@ -1,0 +1,119 @@
+//@version=4
+strategy("RSI Strategy with ATR Stop Loss and Take Profit", overlay=true)
+
+// Define RSI settings
+rsiSource = close
+rsiLength = input(8, title="RSI Length")
+
+// Define ATR settings
+atrLength = input(7, title="ATR Length")
+atrMultiplier = input(14.0, title="ATR Multiplier")
+
+// Calculate RSI
+rsiValue = rsi(rsiSource, rsiLength)
+
+// Trade size in rupees (1,00,000)
+trade_value = 100000.0
+trade_qty = floor(trade_value / close)
+
+// Calculate ATR
+atrValue = atr(atrLength)
+
+// Calculate dynamic thresholds based on volatility
+stddevPeriod = input(27, title="Standard Deviation Period")
+stddevValue = stdev(close, stddevPeriod)
+upperThreshold = sma(close, rsiLength) + (stddevValue * 0.8)
+lowerThreshold = sma(close, rsiLength) - (stddevValue * 0.8)
+
+// Buy and Sell signals
+buySignal = rsiValue <= 37 and close > lowerThreshold
+sellSignal = rsiValue >= 62 and close < upperThreshold
+
+// If we are not currently in a trade and a buy signal is triggered
+if (na(strategy.position_size) or strategy.position_size == 0) and buySignal
+    strategy.order("Buy", strategy.long, qty=trade_qty)
+    
+// If we are in a trade and a sell signal is triggered
+if strategy.position_size > 0 and sellSignal
+    strategy.close("Buy")
+    
+// If we are in a trade and stop loss or take profit is triggered
+if strategy.position_size > 0
+    stopLoss = strategy.position_avg_price - atrValue * atrMultiplier
+    takeProfit = strategy.position_avg_price + atrValue * atrMultiplier
+    
+    if low < stopLoss
+        strategy.close("Buy")
+    if high > takeProfit
+        strategy.close("Buy")
+
+// Plot RSI, ATR, and thresholds
+plot(rsiValue, color=color.blue)
+plot(atrValue * atrMultiplier, color=color.red)
+plot(upperThreshold, color=color.green)
+plot(lowerThreshold, color=color.red)
+
+//The below code enters short positions as well whereas the above code did not. 
+
+//@version=4
+strategy("RSI Strategy with ATR Stop Loss and Take Profit", overlay=true)
+
+// Define RSI settings
+rsiSource = close
+rsiLength = input(14, title="RSI Length")
+
+// Define ATR settings
+atrLength = input(14, title="ATR Length")
+atrMultiplier = input(2.0, title="ATR Multiplier")
+
+// Calculate RSI
+rsiValue = rsi(rsiSource, rsiLength)
+
+// Trade size in rupees (1,00,000)
+trade_value = 100000.0
+trade_qty = floor(trade_value / close)
+
+// Calculate ATR
+atrValue = atr(atrLength)
+
+// Calculate dynamic thresholds based on volatility
+stddevPeriod = input(20, title="Standard Deviation Period")
+stddevValue = stdev(close, stddevPeriod)
+upperThreshold = sma(close, rsiLength) + (stddevValue * 0.8)
+lowerThreshold = sma(close, rsiLength) - (stddevValue * 0.8)
+
+// Buy and Sell signals
+buySignal = rsiValue <= 37 and close > lowerThreshold
+sellSignal = rsiValue >= 62 and close < upperThreshold
+
+// If we are not currently in a trade and a buy signal is triggered
+if (na(strategy.position_size) or strategy.position_size == 0) and buySignal
+    strategy.order("Buy", strategy.long, qty=trade_qty)
+
+// If we are not currently in a trade and a sell signal is triggered
+if (na(strategy.position_size) or strategy.position_size == 0) and sellSignal
+    strategy.order("Sell", strategy.short, qty=trade_qty)
+
+// If we are in a long position and a sell signal is triggered
+if strategy.position_size > 0 and sellSignal
+    strategy.close("Buy")
+    strategy.order("Sell", strategy.short, qty=trade_qty)
+
+// If we are in a short position and a buy signal is triggered
+if strategy.position_size < 0 and buySignal
+    strategy.close("Sell")
+    strategy.order("Buy", strategy.long, qty=trade_qty)
+
+// If we are in a trade and stop loss or take profit is triggered
+if strategy.position_size != 0
+    stopLoss = strategy.position_avg_price - atrValue * atrMultiplier
+    takeProfit = strategy.position_avg_price + atrValue * atrMultiplier
+    
+    if low < stopLoss or high > takeProfit
+        strategy.close_all()
+
+// Plot RSI, ATR, and thresholds
+plot(rsiValue, color=color.blue)
+plot(atrValue * atrMultiplier, color=color.red)
+plot(upperThreshold, color=color.green)
+plot(lowerThreshold, color=color.red)
