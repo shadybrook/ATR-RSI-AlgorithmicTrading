@@ -1,4 +1,4 @@
-High-Frequency Trading (HFT) Strategy with RSI and ATR
+#High-Frequency Trading (HFT) Strategy with RSI and ATR
 
 This repository houses a TradingView algorithmic strategy script for high-frequency trading. The strategy utilizes the Relative Strength Index (RSI) for determining market entry signals, and Average True Range (ATR) for setting stop-loss and take-profit points.
 
